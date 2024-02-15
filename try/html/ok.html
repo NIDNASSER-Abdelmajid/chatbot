@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Chat Flows with chat-bubble</title>
+
+    <!-- for mobile screens -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- stylesheets are conveniently separated into components -->
+    <link rel="stylesheet" media="all" href="./component/styles/setup.css">
+    <link rel="stylesheet" media="all" href="./component/styles/says.css">
+    <link rel="stylesheet" media="all" href="./component/styles/reply.css">
+    <link rel="stylesheet" media="all" href="./component/styles/typing.css">
+    <link rel="stylesheet" media="all" href="./component/styles/input.css">
+    <style>
+        body {
+            background: #dcdde0;
+        }
+
+        .bubble-container {
+            height: 100vh;
+        }
+
+        .bubble-container .input-wrap textarea {
+            margin: 0;
+            width: calc(100% - 30px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- container element for chat window -->
+    <div id="chat"></div>
+
+    <!-- import the JavaScript file -->
+    <!-- <script src="../conversation.json"></script> -->
+    <script src="./component/Bubbles.js"></script>
+    
+
+    <script>
+    // conversation object stored in separate variable:
+var convo = {
+  // "ice" (as in "breaking the ice") is a required conversation object
+  // that maps the first thing the bot will say to the user
+  ice: {
+    // "says" defines an array of sequential bubbles
+    // that the bot will produce
+    says: [
+      "Bonjour! 👋😊",
+      "Est-ce que tu te sens triste ? "],
+    // "reply" is an array of possible options the user can pick from
+    // as a reply
+    reply: [
+      {
+        question: "Oui", // label for the reply option
+        answer: "oui-one" // key for the next conversation object
+      },
+      {
+        question: "Non", // label for the reply option
+        answer: "non-one" // key for a "side note" we can reference from multiple points in the chat
+      }
+    ]
+  },
+
+  // another side note
+  "intro-context": {
+    says: [
+      "This is an example of further instructions...",
+      "...Context and side-notes...",
+      "...With a way to return back to the main trunk of the conversation, like so:"
+    ],
+    reply: [
+      {
+        question: "To the main topic, bananas and ice cream!",
+        answer: "chapter-one"
+      }
+    ]
+  },
+
+  // les Oui's
+  "oui-one": {
+    says: [
+      "Je suis désolé que tu te sentes triste.",
+      "Parfois, ça arrive à tout le monde.",
+      "Mais tu n'es pas seul(e), et ça va aller mieux. 😊",
+      "Est-ce que tu te sens vide de l'intérieur ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-two" // here both replies send people onto the same next chapter
+      },
+      {
+        question: "Non", // both replies send people onto the same next chapter
+        answer: "non-two"
+      }
+    ]
+  },
+  "oui-two": {
+    says: [
+      "C'est normal de ressentir des moments où on se sent vide à l'intérieur.",
+      " Mais souviens-toi que tu n'es pas seul(e).",
+      " Il y a des gens qui se soucient de toi et qui sont là pour t'aider. ",
+      "Parler de ce que tu ressens peut vraiment aider, que ce soit à un ami, un membre de ta famille ou un adulte en qui tu as confiance. ",
+      "Et rappelle-toi toujours que tu es précieux(se) et que tu as beaucoup de potentiel à l'intérieur de toi. 😊",
+      "Est-ce que tu pleures souvent ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-three"
+      },
+      {
+        question: "Non",
+        answer: "non-three" // an example of using the Escape Valve for ineligible, Not Applicable participants
+      }
+    ]
+  },
+  "oui-three": {
+    says: [
+      "Il est normal de pleurer parfois lorsque l'on se sent triste ou blessé.",
+      " Si tu pleures souvent et que tu en ressens le besoin, il peut être utile d'en parler à quelqu'un pour te sentir mieux. ",
+      "Je suis là pour t'écouter si tu en as besoin. 😊",
+      "Est-ce que tu as perdu plaisir aux activités que tu aimais auparavant ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-four"
+      },
+      {
+        question: "Non",
+        answer: "non-four"
+      }
+    ]
+  },
+  "oui-four": {
+    says: [
+      "Je suis désolé d'entendre cela. Parfois, il arrive que l'on perde l'intérêt pour les activités que l'on aimait avant, et cela peut être difficile. ",
+      "Mais tu sais, il y a des moyens de retrouver ce plaisir. ",
+      "Parfois, essayer de nouvelles choses ou retrouver des activités que l'on aimait avant peut aider.",
+      "Est-ce que tu as perdu du poids ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-five"
+      },
+      {
+        question: "Non",
+        answer: "non-five" // an example of using the Escape Valve for ineligible, Not Applicable participants
+      }
+    ]
+  },
+  "oui-five": {
+    says: [
+      "Je suis désolé d'apprendre cela. Perdre du poids peut parfois être une source de préoccupation. ",
+      "Il est important de s'assurer que tu manges suffisamment et que tu prends bien soin de toi.",
+      "Est-ce que tu as un manque d'appétit ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-six"
+      },
+      {
+        question: "Non",
+        answer: "non-six"
+      }
+    ]
+  },
+  "oui-six": {
+    says: [
+      "Je suis désolé d'apprendre cela. ",
+      "Quand on perd l'appétit, ça peut être difficile. ",
+      "Il est important de s'assurer que tu manges suffisamment pour rester en bonne santé.",
+      "Est-ce que tu as pris du poids ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-seven"
+      },
+      {
+        question: "Non",
+        answer: "non-seven" // an example of using the Escape Valve for ineligible, Not Applicable participants
+      }
+    ]
+  },
+  "oui-seven": {
+    says: [
+      "Si tu as pris du poids et que cela te préoccupe, il est important d'en parler à un adulte en qui tu as confiance, comme un parent ou un médecin. ",
+      "Ils pourront t'aider à comprendre ce qui se passe et à trouver des solutions pour te sentir mieux dans ton corps. ",
+      "Mais n’oublie pas que tu es parfait(e). 😊",
+      "Est-ce que tu dors le soir ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-eight"
+      },
+      {
+        question: "Non",
+        answer: "non-eight"
+      }
+    ]
+  },
+  "oui-eight": {
+    says: [
+      "Super ! Il est important de bien dormir la nuit pour être en forme et en bonne santé. ",
+      "Ça aide notre corps et notre cerveau à se reposer et à se régénérer.",
+      "Est-ce que ça t’arrive de ne pas dormir le soir ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-nine"
+      },
+      {
+        question: "Non",
+        answer: "non-nine" // an example of using the Escape Valve for ineligible, Not Applicable participants
+      }
+    ]
+  },
+  "oui-nine": {
+    says: [
+      "Il est important de trouver des moyens de se détendre avant d'aller au lit, comme lire un livre ou écouter de la musique apaisante, car le sommeil est essentiel pour être en forme et en bonne santé.",
+      "Est-ce que ça t’arrive de ne pas pouvoir te réveiller ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-ten"
+      },
+      {
+        question: "Non",
+        answer: "non-ten"
+      }
+    ]
+  },
+  "oui-ten": {
+    says: [
+      "Si tu trouves parfois difficile de te réveiller le matin, cela peut être normal, surtout si tu es très fatigué(e) ou si tu as eu une nuit agitée. ",
+      "Cependant, si tu as du mal à te réveiller régulièrement et que cela affecte ta journée, il faudra en parler à une personne de confiance car cela pourra affecter ton bien-être général et ta capacité à être productiviste pendant la journée.",
+      "Est-ce que tu sens de la fatigue permanente ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-eleven"
+      },
+      {
+        question: "Non",
+        answer: "non-eleven"
+      }
+    ]
+  },
+  "oui-eleven": {
+    says: [
+      "Oh, je suis désolé d'entendre ça. ",
+      "La fatigue permanente peut être vraiment épuisante. ",
+      "La fatigue constante peut être causée par différentes raisons, comme un manque de sommeil, du stress, des problèmes de santé, ou d'autres facteurs. ",
+      "Il est important de comprendre la cause de cette fatigue pour pouvoir trouver des solutions et te sentir mieux.",
+      "Autant que personne, est-ce que tu t'aimes ou tu te détestes ?"
+    ],
+    reply: [
+      {
+        question: "Je m’aime",
+        answer: "oui-twelve"
+      },
+      {
+        question: "Je me déteste",
+        answer: "non-twelve"
+      }
+    ]
+  },
+  "oui-twelve": {
+    says: [
+      "C'est merveilleux de t'entendre exprimer de l'amour pour toi-même ! L'estime de soi est vraiment importante",
+      "Comment trouves-tu ton physique ?"
+    ],
+    reply: [
+      {
+        question: "Bien",
+        answer: "oui-thirteen"
+      },
+      {
+        question: "Pas bien",
+        answer: "non-thirteen"
+      }
+    ]
+  },
+  "oui-thirteen": {
+    says: [
+      "C'est génial de savoir que tu as une vision positive de ton physique ! ",
+      "Il est important de se sentir bien dans sa peau et de s'accepter tel que l'on est.",
+      "Est-ce que tu te concentres en classe ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-fourteen"
+      },
+      {
+        question: "Non",
+        answer: "non-fourteen"
+      }
+    ]
+  },
+  "oui-fourteen": {
+    says: [
+      "C'est fantastique ! La concentration en classe est très importante pour apprendre et réussir.",
+      "Est-ce que tu as des idées noires ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-fifteen"
+      },
+      {
+        question: "Non",
+        answer: "non-fifteen"
+      }
+    ]
+  },
+  "oui-fifteen": {
+    says: [
+      "Si jamais tu as des idées noires, je te recommande vivement de parler à un adulte en qui tu as confiance ou d'appeler une ligne d'écoute d'urgence.",
+      "Tu n'es pas seul(e) et il y a des personnes prêtes à t'écouter et à t'aider. N'hésite pas à demander de l'aide quand tu en as besoin.",
+      "Est-ce qu'il est ce qu'il t'arrive de vouloir te faire du mal ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-sixteen"
+      },
+      {
+        question: "Non",
+        answer: "non-sixteen"
+      }
+    ]
+  },
+  "oui-sixteen": {
+    says: [
+      "Ne t'en fais pas, il y a des adultes qui veulent t'aider à te sentir mieux. ",
+      "Tu peux parler à tes parents, à un enseignant ou à une autre personne en qui tu as confiance. ",
+      "Ils sont là pour t'écouter et te soutenir. Ta sécurité et ton bonheur sont très importants pour eux car il t’aime.",
+      "Est-ce que tu as des idéations suicidaires ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-seventeen"
+      },
+      {
+        question: "Non",
+        answer: "non-seventeen"
+      }
+    ]
+  },
+  "oui-seventeen": {
+    says: [
+      "Il est vraiment important d'en parler à un adulte en qui tu as confiance dès que possible. ",
+      "Tes pensées et tes sentiments sont importants, et il y a des adultes qui veulent t'aider à te sentir mieux. ",
+      "Parle à tes parents, à un enseignant ou à quelqu'un d'autre en qui tu as confiance. ",
+      "Tu n'es pas tout seul, et il y a des solutions pour t'aider à te sentir mieux. ",
+      "N'oublie pas que beaucoup de personnes t'aiment et veulent que tu sois heureux(se)et en bonne santé .",
+      "Est-ce que tu t’es déjà fait du mal ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-eighteen"
+      },
+      {
+        question: "Non",
+        answer: "non-eighteen"
+      }
+    ]
+  },
+  "oui-eighteen": {
+    says: [
+      "C’est très important de demander de l'aide tout de suite. Tu peux parler à un adulte de confiance comme tes parents, un enseignant ou quelqu'un d'autre en qui tu as confiance. ",
+      "Ils sont là pour t'aider et te protéger. Tu n'es pas seul(e) dans cette situation, et il y a des solutions pour te sentir mieux. ",
+      "Ne reste pas seul(e) avec ça, demande de l'aide dès que possible. Tes sentiments sont importants et il y a des gens qui veulent t'aider.",
+      "Est-ce que tu as déjà fait une tentative de suicide ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-nineteen"
+      },
+      {
+        question: "Non",
+        answer: "non-nineteen"
+      }
+    ]
+  },
+  "oui-nineteen": {
+    says: [
+      "Je comprends, mais ça ne vaut absolument pas la peine. ",
+      "Tu es une personne extraordinaire avec beaucoup de potentiel. Tu as tant de belles choses à découvrir dans la vie et tellement à offrir au monde. ",
+      "Chaque jour est une nouvelle opportunité de grandir, d'apprendre et de trouver le bonheur. ",
+      "N'oublie jamais que tu es précieux(se) et que tu mérites d'être aimé(e) et soutenu(e). Tu es fort(e) et tu peux surmonter les défis auxquels tu fais face. Tu n'es pas seul(e) et il y a des gens qui se soucient de toi et qui t’aime.",
+      "Est-ce que tu as déjà subi de harcèlement physique ou moral ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-twenty"
+      },
+      {
+        question: "Non",
+        answer: "non-twenty"
+      }
+    ]
+  },
+  "oui-twenty": {
+    says: [
+      "custom text",
+      "Est-ce que tu as subi une forme d’harcèlement sexuelle ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-twentyone"
+      },
+      {
+        question: "Non",
+        answer: "non-twentyone"
+      }
+    ]
+  },
+  "oui-twentyone": {
+    says: [
+      "custom text....",
+      "Est-ce que tu as subi de la discrimination vis-à-vis de ton sexe ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-twentytwo"
+      },
+      {
+        question: "Non",
+        answer: "non-twentytwo"
+      }
+    ]
+  },
+  "oui-twentytwo": {
+    says: [
+      "custom text....",
+      "Est-ce que tu as déjà subi de la maltraitance ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "end"
+      },
+      {
+        question: "Non",
+        answer: "end"
+      }
+    ]
+  },
+  // les Non's
+  "non-one": {
+    says: [
+      "Je suis ravi que tu ne te sentes pas triste. 😊",
+      "Est-ce que tu te sens vide de l'intérieur ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-two"
+      },
+      {
+        question: "Non",
+        answer: "non-two"
+      }
+    ]
+  },
+  "non-two": {
+    says: [
+      "On peut se sentir bien à l'intérieur. Dans ce cas, c'est génial ! 😊",
+      "Est-ce que tu pleures souvent ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-three"
+      },
+      {
+        question: "Non",
+        answer: "non-three"
+      }
+    ]
+  },
+  "non-three": {
+    says: [
+      "c'est tout à fait compréhensible ! Chaque personne réagit différemment aux émotions.",
+      "Est-ce que tu as perdu plaisir aux activités que tu aimais auparavant ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-four"
+      },
+      {
+        question: "Non",
+        answer: "non-four"
+      }
+    ]
+  },
+  "non-four": {
+    says: [
+      "On peut se sentir enthousiaste et apprécier les activités que l'on aime. C'est super de pouvoir profiter de ce que l'on aime faire. 😊",
+      "Est-ce que tu as perdu du poids ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-five"
+      },
+      {
+        question: "Non",
+        answer: "non-five"
+      }
+    ]
+  },
+  "non-five": {
+    says: [
+      "Oh, c'est bien que tu n'aies pas perdu de poids ! ",
+      "Parfois, notre poids peut changer un peu, mais tant que tu te sens bien et en bonne santé, c'est ce qui compte le plus.",
+      "Est ce que tu as un manque d'appétit ?" 
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-six"
+      },
+      {
+        question: "Non",
+        answer: "non-six"
+      }
+    ]
+  },
+  "non-six": {
+    says: [
+      "C'est bien si tu n'as pas de manque d'appétit ! ",
+      "Se sentir bien et avoir envie de manger est important pour rester en bonne santé.",
+      "Est-ce que tu as pris du poids ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-seven"
+      },
+      {
+        question: "Non",
+        answer: "non-seven"
+      }
+    ]
+  },
+  "non-seven": {
+    says: [
+      "Si tu n'as pas pris de poids, c'est bien aussi ! Chaque personne a un poids naturel qui lui convient.",
+      "Est-ce que tu dors le soir ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-eight"
+      },
+      {
+        question: "Non",
+        answer: "non-eight"
+      }
+    ]
+  },
+  "non-eight": {
+    says: [
+      "Si tu rencontres des difficultés à dormir la nuit, cela peut être frustrant. ",
+      "Il pourrait être utile de parler à quelqu’un en qui tu as confiance",
+      "Est-ce que ça t’arrive de ne pas dormir le soir ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-nine"
+      },
+      {
+        question: "Non",
+        answer: "non-nine"
+      }
+    ]
+  },
+  "non-nine": {
+    says: [
+      "C’est tout à fait compréhensible ! Tout le monde a des nuits où il est difficile de s'endormir de temps en temps. ",
+      "Si cela devient un problème fréquent, il pourrait être utile d'explorer d'autres techniques de relaxation.",
+      "Est-ce que ça t’arrive de ne pas pouvoir te réveiller ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-ten"
+      },
+      {
+        question: "Non",
+        answer: "non-ten"
+      }
+    ]
+  },
+  "non-ten": {
+    says: [
+      "C'est bien si tu n'as pas de difficulté à te réveiller le matin ! ",
+      "Cela signifie que tu réussis à bien te reposer pendant la nuit et que tu es prêt(e) à affronter ta journée.",
+      "Est-ce que tu sens de la fatigue permanente ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-eleven"
+      },
+      {
+        question: "Non",
+        answer: "non-eleven"
+      }
+    ]
+  },
+  "non-eleven": {
+    says: [
+      "C'est super si tu ne ressens pas de fatigue permanente ! ",
+      "Cela veut dire que tu as beaucoup d'énergie pour profiter pleinement de tes journées.",
+      "Autant que personne, est-ce que tu t'aimes ou tu te détestes ?"
+    ],
+    reply: [
+      {
+        question: "Je m’aime",
+        answer: "oui-twelve"
+      },
+      {
+        question: "Je me déteste",
+        answer: "non-twelve"
+      }
+    ]
+  },
+  "non-twelve": {
+    says: [
+      "Je suis désolé d'entendre que tu ressens cela. ",
+      "Il est important de se rappeler que chacun de nous mérite d'être aimé et respecté, y compris toi-même. ",
+      "Tu es précieux(se) malgré tous ce qui peux se passer.",
+      "Comment trouves-tu ton physique ?"
+    ],
+    reply: [
+      {
+        question: "Bien",
+        answer: "oui-thirteen"
+      },
+      {
+        question: "Pas bien",
+        answer: "non-thirteen"
+      }
+    ]
+  },
+  "non-thirteen": {
+    says: [
+      "Je suis désolé(e) d'entendre que tu ressens cela. ",
+      "Il est normal de parfois se sentir mal à l'aise avec son apparence, mais il est important de se rappeler que chacun de nous est unique et spécial à sa manière. ",
+      "Ce qui compte vraiment, c'est ce que nous sommes à l'intérieur, nos qualités, nos actions et nos relations avec les autres. Et n’oublie pas tu es parfait(e)",
+      "Est-ce que tu te concentres en classe ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-fourteen"
+      },
+      {
+        question: "Non",
+        answer: "non-fourteen"
+      }
+    ]
+  },
+  "non-fourteen": {
+    says: [
+      "Je comprends. Parfois, cela peut être difficile de se concentrer en classe. ",
+      "Mais ne t'inquiète pas, nous pouvons trouver des façons de t'aider à te concentrer mieux. ",
+      "Peut-être essaye de trouver un endroit calme où tu pourrais t'asseoir en classe, ou prendre des pauses courtes pour te reposer un peu.",
+      "Est-ce que tu as des idées noires ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-fifteen"
+      },
+      {
+        question: "Non",
+        answer: "non-fifteen"
+      }
+    ]
+  },
+  "non-fifteen": {
+    says: [
+      "C’est tout à fait compréhensible ! Il est bon de savoir que tu ne ressens pas de pensées sombres en ce moment. ",
+      "Cependant, si jamais tu en ressens à l'avenir, n'oublie pas que tu peux toujours parler à quelqu'un en qui tu as confiance pour obtenir du soutien.",
+      "Est-ce qu'il est ce qu'il t'arrive de vouloir te faire du mal ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-sixteen"
+      },
+      {
+        question: "Non",
+        answer: "non-sixteen"
+      }
+    ]
+  },
+  "non-sixteen": {
+    says: [
+      "c'est très bien. Mais n'oublie pas que si jamais tu as des sentiments ou des pensées qui te font du mal, il est important de parler à quelqu'un en qui tu as confiance. ",
+      "Tes sentiments sont importants et il y a des adultes prêts à t'écouter et à t'aider si tu en as besoin.",
+      "Est-ce que tu as des idéations suicidaires ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-seventeen"
+      },
+      {
+        question: "Non",
+        answer: "non-seventeen"
+      }
+    ]
+  },
+  "non-seventeen": {
+    says: [
+      "Bravo ! je suis fière de toi, mais n'oublie pas que si jamais tu te sens triste ou si tu as des pensées qui te font du mal, il est important d'en parler à un adulte en qui tu as confiance. ",
+      "Tes sentiments sont importants et il y a toujours des gens prêts à t'aider à te sentir mieux.",
+      "Est-ce que tu t’es déjà fait du mal ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-eighteen"
+      },
+      {
+        question: "Non",
+        answer: "non-eighteen"
+      }
+    ]
+  },
+  "non-eighteen": {
+    says: [
+      "Très bien !  il ne faut pas se faire du mal car il existe plusieurs solutions qui peuvent t’aider à te sentir mieux et résoudre les problèmes sans se blesser .",
+      "Est-ce que tu as déjà fait une tentative de suicide ?" 
+  ],
+  reply: [
+  {
+        question: "Oui",
+        answer: "oui-nineteen"
+      },
+      {
+        question: "Non",
+        answer: "non-nineteen"
+      }
+  ] 
+    },
+  
+    "non-nineteen": {
+    says: [
+      "custom text....",
+      "Est-ce que tu as déjà subi de harcèlement physique ou moral ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-twenty"
+      },
+      {
+        question: "Non",
+        answer: "non-twenty"
+      }
+    ]
+  },
+  
+  "non-twenty": {
+    says: [
+      "custom text...",
+      "Est-ce que tu as subi une forme d’harcèlement sexuelle ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-twentyone"
+      },
+      {
+        question: "Non",
+        answer: "non-twentyone"
+      }
+    ]
+  },
+  
+  "non-twentyone": {
+    says: [
+      "Custom text...",
+      "Est-ce que tu as subi de la discrimination vis-à-vis de ton sexe ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "oui-twentytwo"
+      },
+      {
+        question: "Non",
+        answer: "non-twentytwo"
+      }
+    ]
+  },
+  "non-twentytwo": {
+    says: [
+      "Custom text...",
+      "Est-ce que tu as déjà subi de la maltraitance ?"
+    ],
+    reply: [
+      {
+        question: "Oui",
+        answer: "end"
+      },
+      {
+        question: "Non",
+        answer: "end"
+      }
+    ]
+  },
+  
+  end: {
+    says: [
+      // ecrit un message de fin, et que cela va etre transmis a un operateur pour une prise en charge
+      " Merci d'avoir partagé ce que tu ressens avec moi. ",
+      "Je suis là pour t'écouter et te soutenir. ",
+      "Si tu as besoin de parler à quelqu'un, n'hésite pas à en parler à un adulte en qui tu as confiance. ",
+      "Tu es précieux(se) et tu mérites d'être aimé(e) et soutenu(e). ",
+    ],
+    reply: [
+      {
+        question: "Tu veux encore parler ?, Je suis là pour toi",
+        answer: "ice"
+      }
+    ]
+  }
+} // end conversation object
+
+// initialize by constructing a named function...
+var chatWindow = new Bubbles(
+  document.getElementById("chat"), // ...passing HTML container element...
+  "chatWindow" // ...and name of the function as a parameter
+)
+
+// `.talk()` will get your bot to begin the conversation
+chatWindow.talk(
+  // pass your JSON/JavaScript object to `.talk()` function where
+  // you define how the conversation between the bot and user will go
+  convo
+)
+
+// this function is called when user clicks "Yes!" in the "chapter-four" dialogue
+externalResourceFunction = function() {
+  // together with the function we'll restart the conversation starting from "capther-four"
+  // to make sure the user isn't left hanging after the function below has been executed
+  chatWindow.talk(convo, "chapter-four")
+
+  // function that opens external window
+  window.open(
+    "https://meanbusiness.com/wp-content/uploads/2018/04/IceCream-BananaSkis.gif",
+    "_blank",
+    "toolbar=no,scrollbars=no,menubar=no,resizable=no,location=no,titlebar=no,width=300,height=600"
+  )
+}
+</script>
+<!-- a script that saves the convo in a json file as it builds -->
+</body>
+
+</html>
